@@ -123,9 +123,93 @@ var graph = {
             ]
 
     };
+/*
+var graph = {
+    "nodes": [  { "x": 208.992345, "y": 273.053211 },
+        { "x": 595.98896,  "y":  56.377057 },
+        { "x": 319.568434, "y": 278.523637 },
+        { "x": 214.494264, "y": 214.893585 },
+        { "x": 482.664139, "y": 340.386773 },
+        { "x":  84.078465, "y": 192.021902 },
+        { "x": 196.952261, "y": 370.798667 },
+        { "x": 107.358165, "y": 435.15643  },
+        { "x": 401.168523, "y": 443.407779 },
+    ],
+    "edges": [  { "target": 1, "source":  0 },
+        { "target":  2, "source":  1 },
+        { "target": 3, "source":  2 },
+        { "target":  4, "source":  3 },
+        { "target": 5, "source":  4 },
+        { "target":  6, "source":  5 },
+        { "target": 7, "source":  6 },
+        { "target":  8, "source":  7 },
+        { "target": 0, "source":  8 }
+    ]
 
+};
+*/
     //------------------------------------------------------
     // Change these functions
+        function pos_xy_diff(pos0, pos1)
+        {
+            var delta_x = pos0['x'] - pos1['x'];
+            var delta_y = pos0['y'] - pos1['y'];
+            return [delta_x, delta_y];
+        }
+
+        function pos_diff(pos0, pos1)
+        {
+            var delta_x = pos0[0] - pos1[0];
+            var delta_y = pos0[1] - pos1[1];
+            return [delta_x, delta_y];
+        }
+
+        function pos_xy_add(pos0, pos1)
+        {
+            var delta_x = pos0['x'] + pos1['x'];
+            var delta_y = pos0['y'] + pos1['y'];
+            return [delta_x, delta_y];
+        }
+
+        function pos_add(pos0, pos1)
+        {
+            var delta_x = pos0[0] + pos1[0];
+            var delta_y = pos0[1] + pos1[1];
+            return [delta_x, delta_y];
+        }
+
+        function pos_scale(pos, k)
+        {
+            return [pos[0]*k, pos[1]*k];
+        }
+
+        function normalize2D(v){
+            var len = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+            if (len == 0.0)
+            {
+                console.log("Zero length gradient");
+                return ([0.0,0.0]);
+            }
+            return [v[0]/len,v[1]/len];
+        }
+
+        function fr(k, delta){
+            var delta_disp = pos_scale(normalize2D(delta), Math.pow(k, 2)/mold(delta));
+            if (isNaN(delta_disp[0]) && isNaN(delta_disp[1]))
+            {
+                return [-50000, -50000];
+            }
+            return delta_disp;
+        }
+
+        function fa(k, delta){
+            var delta_disp = pos_scale(normalize2D(delta), Math.pow(mold(delta), 2)/k);
+            return delta_disp;
+        }
+
+        function mold(vec){
+            return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1]);
+        }
 
         function draw_graph(ctx,graph)
         {
@@ -136,6 +220,7 @@ var graph = {
             // Draw the edges
             for (var i=0;i<edges.length;i++)
             {
+                // locate vertecies
                 var e = edges[i];
                 var vidx=e["source"]
                 x1 = nodes[vidx]["x"];
@@ -144,17 +229,19 @@ var graph = {
                 x2 = nodes[vidx]["x"];
                 y2 = nodes[vidx]["y"];
 
+                // draw edge
                 ctx.beginPath();
                 ctx.moveTo(x1,y1);
-	            ctx.lineTo(x2,y2);
+                ctx.lineTo(x2,y2);
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = '#000000';
                 ctx.stroke();
             }
+
              // Draw the vertices
             for (var i=0;i<nodes.length;i++)
             {
-                var node = nodes[i]
+                var node = nodes[i];
                 var radius = 5;
                 x = node["x"];
                 y = node["y"];
@@ -167,7 +254,66 @@ var graph = {
             }
 
         }
-        function update_positions(){}
+        function update_positions(ctx, canvas)
+        {
+            // ftp://ftp.mathe2.uni-bayreuth.de/axel/papers/reingold:graph_drawing_by_force_directed_placement.pdf
+            var t = parseInt(document.getElementById('t').value); // maximum movement of a node per iteration
+            var delta_t = parseInt(document.getElementById('delta_t').value); // damping value
+            var num_iter = parseInt(document.getElementById('num_iter').value); // number of iterations
+            var N = graph['nodes'].length; // number of nodes
+            var E = graph['edges'].length; // number of nodes
+            var A = width * height;
+            var k = 0.0;
+            if ( document.getElementById('default_k').checked ){
+                k = document.getElementById('k').value;
+            }else{
+                k = Math.sqrt(A) / N;
+            }
+            // init disp
+            var disp = [];
+            for (var v = 0; v < N; v++){
+                disp.push([0.0, 0.0]);
+            }
+            for (var i = 0; i < num_iter; i++){
+                // calculate total repulsive forces, and keep it in disp array
+                for (var v = 0; v < N; v++){
+                    for (var u = 0; u < N; u++){
+                        if (v != u){
+                            // console.log('v=', v, 'u=', u);
+                            var delta = pos_xy_diff(graph['nodes'][v], graph['nodes'][u]);
+                            var delta_disp = fr(k, delta);
+                            disp[v] = pos_add(disp[v], delta_disp);
+                        }
+                    }
+                }
+                // calculate attractive forces, and add to disp array
+                for (var e = 0; e < E; e++){
+                    //
+                    var v = graph['edges'][e]['target'];
+                    var u = graph['edges'][e]['source'];
+                    var delta = pos_xy_diff(graph['nodes'][v], graph['nodes'][u]);
+                    var delta_disp = fa(k, delta);
+                    disp[v] = pos_diff(disp[v], delta_disp);
+                    disp[u] = pos_add(disp[u], delta_disp);
+                }
+                // limit the maximum displacement to the temperature t
+                // and then prevent from being displaced outside frame
+                for (var v = 0; v < N; v++){
+                    console.log('v=', v);
+                    var pos = [graph['nodes'][v]['x'], graph['nodes'][v]['y']];
+                    pos = pos_add(pos, pos_scale(normalize2D(disp[v]), Math.min(mold(disp[v]), t)));
+                    graph['nodes'][v]['x'] = Math.min(width / 2, Math.max(-width/2, pos[0]));
+                    graph['nodes'][v]['x'] = Math.max(0, graph['nodes'][v]['x']);
+                    graph['nodes'][v]['y'] = Math.min(height / 2, Math.max(-height/2, pos[1]));
+                    graph['nodes'][v]['y'] = Math.max(0, graph['nodes'][v]['y']);
+                }
+                // reduce the temperature as the layout approaches a better configuration
+                t = t - delta_t;
+                console.log(i);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                draw_graph(ctx,graph);
+            }
+        }
 
 //MAIN
 function main() {
@@ -186,7 +332,7 @@ function render(){
     // Get the rendering context for 2DCG <- (2)
     var ctx = canvas.getContext('2d');
     draw_graph(ctx,graph);
-
+    update_positions(ctx, canvas);
 }
     </script>
 	</body>
