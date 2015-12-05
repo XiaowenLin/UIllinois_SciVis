@@ -36,6 +36,7 @@ DEALINGS WITH THE SOFTWARE. -->
         <form id="input_form">
         <fieldset>
         <legend>Graph Layout Parameters</legend>
+				 Number of nodes <input type="text" id="num_nodes" value="15"><br><br>
          Maximum movement <input type="text" id="t" value="10.0"><br><br>
          Damping value <input type="text" id="delta_t" value="0.0"><br><br>
          Number of iterations <input type="text" id="num_iter" value="15"><br><br>
@@ -54,102 +55,31 @@ DEALINGS WITH THE SOFTWARE. -->
 
 var width = 640,
     height = 480;
+var num_nodes = parseInt(document.getElementById('num_nodes').value); 
+var graph = random_cycle(num_nodes, width, height); 
 
-var graph = {
-    "nodes": [  { "x": 208.992345, "y": 273.053211 },
-                { "x": 595.98896,  "y":  56.377057 },
-                { "x": 319.568434, "y": 278.523637 },
-                { "x": 214.494264, "y": 214.893585 },
-                { "x": 482.664139, "y": 340.386773 },
-                { "x":  84.078465, "y": 192.021902 },
-                { "x": 196.952261, "y": 370.798667 },
-                { "x": 107.358165, "y": 435.15643  },
-                { "x": 401.168523, "y": 443.407779 },
-                { "x": 508.368779, "y": 386.665811 },
-                { "x": 355.93773,  "y": 460.158711 },
-                { "x": 283.630624, "y":  87.898162 },
-                { "x": 194.771218, "y": 436.366028 },
-                { "x": 477.520013, "y": 337.547331 },
-                { "x": 572.98129,  "y": 453.668459 },
-                { "x": 106.717817, "y": 235.990363 },
-                { "x": 265.064649, "y": 396.904945 },
-                { "x": 452.719997, "y": 137.886092 }
-            ],
-    "edges": [  { "target": 11, "source":  0 },
-                { "target":  3, "source":  0 },
-                { "target": 10, "source":  0 },
-                { "target": 16, "source":  0 },
-                { "target":  1, "source":  0 },
-                { "target":  3, "source":  0 },
-                { "target":  9, "source":  0 },
-                { "target":  5, "source":  0 },
-                { "target": 11, "source":  0 },
-                { "target": 13, "source":  0 },
-                { "target": 16, "source":  0 },
-                { "target":  3, "source":  1 },
-                { "target":  9, "source":  1 },
-                { "target": 12, "source":  1 },
-                { "target":  4, "source":  2 },
-                { "target":  6, "source":  2 },
-                { "target":  8, "source":  2 },
-                { "target": 13, "source":  2 },
-                { "target": 10, "source":  3 },
-                { "target": 16, "source":  3 },
-                { "target":  9, "source":  3 },
-                { "target":  7, "source":  3 },
-                { "target": 11, "source":  5 },
-                { "target": 13, "source":  5 },
-                { "target": 12, "source":  5 },
-                { "target":  8, "source":  6 },
-                { "target": 13, "source":  6 },
-                { "target": 10, "source":  7 },
-                { "target": 11, "source":  7 },
-                { "target": 17, "source":  8 },
-                { "target": 13, "source":  8 },
-                { "target": 11, "source": 10 },
-                { "target": 16, "source": 10 },
-                { "target": 13, "source": 11 },
-                { "target": 14, "source": 12 },
-                { "target": 14, "source": 12 },
-                { "target": 14, "source": 12 },
-                { "target": 15, "source": 12 },
-                { "target": 16, "source": 12 },
-                { "target": 15, "source": 14 },
-                { "target": 16, "source": 14 },
-                { "target": 15, "source": 14 },
-                { "target": 16, "source": 15 },
-                { "target": 16, "source": 15 },
-                { "target": 17, "source": 16 }
-            ]
-
-    };
-/*
-var graph = {
-    "nodes": [  { "x": 208.992345, "y": 273.053211 },
-        { "x": 595.98896,  "y":  56.377057 },
-        { "x": 319.568434, "y": 278.523637 },
-        { "x": 214.494264, "y": 214.893585 },
-        { "x": 482.664139, "y": 340.386773 },
-        { "x":  84.078465, "y": 192.021902 },
-        { "x": 196.952261, "y": 370.798667 },
-        { "x": 107.358165, "y": 435.15643  },
-        { "x": 401.168523, "y": 443.407779 },
-    ],
-    "edges": [  { "target": 1, "source":  0 },
-        { "target":  2, "source":  1 },
-        { "target": 3, "source":  2 },
-        { "target":  4, "source":  3 },
-        { "target": 5, "source":  4 },
-        { "target":  6, "source":  5 },
-        { "target": 7, "source":  6 },
-        { "target":  8, "source":  7 },
-        { "target": 0, "source":  8 }
-    ]
-
-};
-*/
     //------------------------------------------------------
     // Change these functions
+		    function random_cycle(n, lim_x, lim_y) 
+				{ 
+						var edges=[]; 
+						for(var i=0;i<n;i++) 
+						    { 
+						        edge = {"target":(i+1) % n, "source":i} 
+						        edges.push(edge) 
+						    } 
+						var nodes=[] 
+						    for(var i=0;i<n;i++) 
+						    { 
+						        var rand_x = Math.random()*lim_x;
+						        var rand_y = Math.random()*lim_y; 
+						        node = {"x": rand_x, "y": rand_y} 
+						        nodes.push(node) 
+						    } 
+						var g = {"nodes":nodes,"edges":edges}; 
+						return g; 
+				}  
+
         function pos_xy_diff(pos0, pos1)
         {
             var delta_x = pos0['x'] - pos1['x'];
@@ -188,23 +118,21 @@ var graph = {
             if (len == 0.0)
             {
                 console.log("Zero length gradient");
-                return ([0.0,0.0]);
+                return ([1, 1]);
             }
             return [v[0]/len,v[1]/len];
         }
 
         function fr(k, delta){
-            var delta_disp = pos_scale(normalize2D(delta), Math.pow(k, 2)/mold(delta));
-            if (isNaN(delta_disp[0]) && isNaN(delta_disp[1]))
-            {
-                return [-50000, -50000];
-            }
-            return delta_disp;
+						var mld = mold(delta);
+						if (mld == 0){
+							return k * k;
+						}
+            return k * k / mld;
         }
 
         function fa(k, delta){
-            var delta_disp = pos_scale(normalize2D(delta), Math.pow(mold(delta), 2)/k);
-            return delta_disp;
+            return mold(delta) * mold(delta) / k;
         }
 
         function mold(vec){
@@ -257,6 +185,7 @@ var graph = {
         function update_positions(ctx, canvas)
         {
             // ftp://ftp.mathe2.uni-bayreuth.de/axel/papers/reingold:graph_drawing_by_force_directed_placement.pdf
+						 
             var t = parseInt(document.getElementById('t').value); // maximum movement of a node per iteration
             var delta_t = parseInt(document.getElementById('delta_t').value); // damping value
             var num_iter = parseInt(document.getElementById('num_iter').value); // number of iterations
@@ -281,7 +210,7 @@ var graph = {
                         if (v != u){
                             // console.log('v=', v, 'u=', u);
                             var delta = pos_xy_diff(graph['nodes'][v], graph['nodes'][u]);
-                            var delta_disp = fr(k, delta);
+                            var delta_disp = pos_scale(normalize2D(delta), fr(k, delta));
                             disp[v] = pos_add(disp[v], delta_disp);
                         }
                     }
@@ -292,7 +221,7 @@ var graph = {
                     var v = graph['edges'][e]['target'];
                     var u = graph['edges'][e]['source'];
                     var delta = pos_xy_diff(graph['nodes'][v], graph['nodes'][u]);
-                    var delta_disp = fa(k, delta);
+                    var delta_disp = pos_scale(normalize2D(delta), fa(k, delta));
                     disp[v] = pos_diff(disp[v], delta_disp);
                     disp[u] = pos_add(disp[u], delta_disp);
                 }
@@ -302,11 +231,12 @@ var graph = {
                     console.log('v=', v);
                     var pos = [graph['nodes'][v]['x'], graph['nodes'][v]['y']];
                     pos = pos_add(pos, pos_scale(normalize2D(disp[v]), Math.min(mold(disp[v]), t)));
-                    graph['nodes'][v]['x'] = Math.min(width / 2, Math.max(-width/2, pos[0]));
-                    graph['nodes'][v]['x'] = Math.max(0, graph['nodes'][v]['x']);
-                    graph['nodes'][v]['y'] = Math.min(height / 2, Math.max(-height/2, pos[1]));
-                    graph['nodes'][v]['y'] = Math.max(0, graph['nodes'][v]['y']);
+                    graph['nodes'][v]['x'] = Math.min(width, Math.max(0, pos[0]));
+                    //graph['nodes'][v]['x'] = Math.max(10, graph['nodes'][v]['x']);
+                    graph['nodes'][v]['y'] = Math.min(height, Math.max(0, pos[1]));
+                    //graph['nodes'][v]['y'] = Math.max(10, graph['nodes'][v]['y']);
                 }
+								// shift the whole graph to the center of the canvas
                 // reduce the temperature as the layout approaches a better configuration
                 t = t - delta_t;
                 console.log(i);
@@ -316,12 +246,9 @@ var graph = {
         }
 
 //MAIN
+var canvas = document.getElementById('example');
+var ctx = canvas.getContext('2d');
 function main() {
-    render();
-}
-
-function render(){
-    var canvas = document.getElementById('example');
     if (! canvas) {
         console.log(' Failed to retrieve the < canvas > element');
         return false;
@@ -330,8 +257,10 @@ function render(){
 	    console.log(' Got < canvas > element ');
     }
     // Get the rendering context for 2DCG <- (2)
-    var ctx = canvas.getContext('2d');
     draw_graph(ctx,graph);
+}
+
+function render(){
     update_positions(ctx, canvas);
 }
     </script>
